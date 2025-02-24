@@ -25,7 +25,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "**${{ github.actor }}** has **${{ github.event.action }}** a Pull Request: **${{ github.event.pull_request.title }}**"
+                          "text": "<b>${{ github.actor }}</b> has **${{ github.event.action }}** a Pull Request: **${{ github.event.pull_request.title }}**"
                         }
                       }]
                     },
