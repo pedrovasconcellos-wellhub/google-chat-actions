@@ -2,10 +2,9 @@ name: Google Chat Webhook
 
 on:
   workflow_call:
-    inputs:
+    secrets:
       google_chat_webhook:
         required: true
-        type: string
 
 jobs:
   notify-google-chat:
@@ -33,4 +32,4 @@ jobs:
                   }
                 }]
               }' \
-          "${{ inputs.google_chat_webhook }}"
+          "${{ secrets.google_chat_webhook }}"
