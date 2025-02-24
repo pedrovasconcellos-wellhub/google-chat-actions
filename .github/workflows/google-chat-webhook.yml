@@ -72,7 +72,6 @@ jobs:
                   }
                 }],
                 "thread": {
-                  "name": "spaces/AAAAoiz3Uzg/threads/abc",
                   "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
                 }
               }' \
