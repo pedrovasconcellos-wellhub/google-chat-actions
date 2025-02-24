@@ -72,8 +72,7 @@ jobs:
                   }
                 }],
                 "thread": {
-                  "name": "spaces/AAAAoiz3Uzg/threads/KaJm26TcpZc",
                   "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
                 }
               }' \
-          "${{ secrets.google_chat_webhook }}&threadKey=pedrovasconcellos-wellhub/github-tracker/13"
+          "${{ secrets.google_chat_webhook }}&threadKey=${{ github.repository }}/${{ github.event.pull_request.number }}"
