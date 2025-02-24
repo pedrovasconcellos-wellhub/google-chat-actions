@@ -2,7 +2,7 @@ name: Notify Google Chat on PR Events (Reusable)
 
 on:
  pull_request:
-    types: ${{ inputs.pr_events || 'opened, synchronize, reopened' }}
+    types: ${{ inputs.pr_events || 'opened, reopened' }}
   # workflow_call:
   #   inputs:
   #     header_image:
