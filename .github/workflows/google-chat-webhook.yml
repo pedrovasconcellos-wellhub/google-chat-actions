@@ -5,11 +5,18 @@ on:
     inputs:
       header_image:
         description: "Custom header image URL (optional)"
+        default: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
         required: false
         type: string
     secrets:
       google_chat_webhook:
         required: true
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+  pull_request_review:
+    types: [submitted] 
 
 jobs:
   notify-google-chat:
@@ -17,14 +24,16 @@ jobs:
     steps:
       - name: Set default image if not provided
         run: |
-          if [ -z "${{ inputs.header_image }}" ]; then
-            echo "HEADER_IMAGE=https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" >> $GITHUB_ENV  # Outra imagem padrão
-          else
-            echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
+          echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
+
+      - name: Send Notification to Google Chat on PR Events
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request_review" ]; then
+            PR_EVENT="${{ github.actor }} has submitted a review for the Pull Request"
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            PR_EVENT="${{ github.actor }} has opened/updated the Pull Request"
           fi
 
-      - name: Send Notification to Google Chat
-        run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
                 "cardsV2": [{
@@ -38,7 +47,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>@${{ github.actor }}</b> (${{ github.actor_email }}) has ${{ github.event.action }} a Pull Request:<br><b><i>${{ github.event.pull_request.title }}</i></b>"
+                          "text": "<b>${{ github.actor }}</b> has triggered an event:<br><b>${{ github.event.pull_request.title }}</b><br>${PR_EVENT}"
                         }
                       }]
                     },
