@@ -72,7 +72,7 @@ jobs:
                   }
                 }],
                 "thread": {
-                  "name": "spaces/AAAAoiz3Uzg/threads/${{ github.event.pull_request.number }}"
+                  "name": "spaces/AAAAoiz3Uzg/threads/${{ github.event.pull_request.number }}",
                   "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
                 }
               }' \
