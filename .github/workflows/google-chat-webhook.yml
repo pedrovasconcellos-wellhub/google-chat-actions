@@ -76,4 +76,4 @@ jobs:
                   "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
                 }
               }' \
-          "${{ secrets.google_chat_webhook }}"
+          "${{ secrets.google_chat_webhook }}&threadKey=pedrovasconcellos-wellhub/github-tracker/13"
