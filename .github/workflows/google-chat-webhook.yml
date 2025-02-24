@@ -1,15 +1,17 @@
 name: Notify Google Chat on PR Events (Reusable)
 
 on:
-  workflow_call:
-    inputs:
-      header_image:
-        description: "Custom header image URL (optional)"
-        required: false
-        type: string
-    secrets:
-      google_chat_webhook:
-        required: true
+ pull_request:
+    types: ${{ inputs.pr_events || 'opened, synchronize, reopened' }}
+  # workflow_call:
+  #   inputs:
+  #     header_image:
+  #       description: "Custom header image URL (optional)"
+  #       required: false
+  #       type: string
+  #   secrets:
+  #     google_chat_webhook:
+  #       required: true
 
 jobs:
   notify-google-chat:
