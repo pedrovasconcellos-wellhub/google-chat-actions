@@ -38,7 +38,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>${{ github.actor }}</b> has ${{ github.event.action }} a Pull Request:<br><b>${{ github.event.pull_request.title }}</b>"
+                          "text": "<b>@${{ github.actor }}</b> (${{ github.actor_email }}) has ${{ github.event.action }} a Pull Request:<br><b><i>${{ github.event.pull_request.title }}</i></b>"
                         }
                       }]
                     },
