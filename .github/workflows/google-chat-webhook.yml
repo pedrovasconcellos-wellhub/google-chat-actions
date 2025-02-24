@@ -8,6 +8,11 @@ on:
         default: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
         required: false
         type: string
+      reply_mode:
+        description: True for reply, false for a new message
+        default: true
+        required: false
+        type: boolean
     secrets:
       google_chat_webhook:
         required: true
@@ -22,9 +27,16 @@ jobs:
   notify-google-chat:
     runs-on: ubuntu-latest
     steps:
-      - name: Set default image if not provided
+      - name: Set input props
+        id: set_inputs
         run: |
           echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
+          if [ ${{ inputs.reply_mode! }} ]; then
+            REPLY_MODE="MESSAGE_REPLY_OPTION_UNSPECIFIED"
+          else
+            REPLY_MODE="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
+          fi
+          echo "::set-output name=reply_mode::${REPLY_MODE}"
 
       - name: Prepare PR_EVENT message
         id: pr_event
@@ -75,4 +87,4 @@ jobs:
                   "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
                 }
               }' \
-          "${{ secrets.google_chat_webhook }}&threadKey=${{ github.repository }}/${{ github.event.pull_request.number }}"
+          "${{ secrets.google_chat_webhook }}&messageReplyOption=${{steps.set_inputs.outputs.reply_mode}}"
