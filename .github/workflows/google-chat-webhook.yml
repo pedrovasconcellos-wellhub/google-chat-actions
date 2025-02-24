@@ -70,6 +70,9 @@ jobs:
                       }]
                     }]
                   }
-                }]
+                }],
+                "thread": {
+                  "name": "${{ github.repository }}/${{ github.event.pull_request.number }}"
+                }
               }' \
           "${{ secrets.google_chat_webhook }}"
