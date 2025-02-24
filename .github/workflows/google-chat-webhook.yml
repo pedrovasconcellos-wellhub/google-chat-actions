@@ -1,4 +1,4 @@
-name: Google Chat Webhook
+name: Notify Google Chat on PR Events (Reusable)
 
 on:
   workflow_call:
@@ -31,16 +31,16 @@ jobs:
                     },
                     {
                       "widgets": [{
-                        "buttons": [{
-                          "textButton": {
+                        "buttonList": {
+                          "buttons": [{
                             "text": "View Pull Request",
                             "onClick": {
                               "openLink": {
                                 "url": "${{ github.event.pull_request.html_url }}"
                               }
                             }
-                          }
-                        }]
+                          }]
+                        }
                       }]
                     }]
                   }
