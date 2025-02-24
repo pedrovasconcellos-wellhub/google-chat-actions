@@ -51,7 +51,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>${{ github.actor }}</b> has triggered an event:<br><b>${{ github.event.pull_request.title }}</b><br>${steps.pr_event.outputs.pr_event}"
+                          "text": "<b>${{ github.actor }}</b> has triggered an event:<br><b>${{ github.event.pull_request.title }}</b><br>${{steps.pr_event.outputs.pr_event}}"
                         }
                       }]
                     },
