@@ -26,14 +26,18 @@ jobs:
         run: |
           echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
 
-      - name: Send Notification to Google Chat on PR Events
+      - name: Prepare PR_EVENT message
+        id: pr_event
         run: |
           if [ "${{ github.event_name }}" == "pull_request_review" ]; then
             PR_EVENT="${{ github.actor }} has submitted a review for the Pull Request"
           elif [ "${{ github.event_name }}" == "pull_request" ]; then
             PR_EVENT="${{ github.actor }} has opened/updated the Pull Request"
           fi
+          echo "::set-output name=pr_event::${PR_EVENT}"
 
+      - name: Send Notification to Google Chat on PR Events
+        run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
                 "cardsV2": [{
@@ -47,7 +51,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>${{ github.actor }}</b> has triggered an event:<br><b>${{ github.event.pull_request.title }}</b><br>${PR_EVENT}"
+                          "text": "<b>${{ github.actor }}</b> has triggered an event:<br><b>${{ github.event.pull_request.title }}</b><br>${steps.pr_event.outputs.pr_event}"
                         }
                       }]
                     },
