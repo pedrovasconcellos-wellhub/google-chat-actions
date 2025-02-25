@@ -21,12 +21,12 @@ on:
     types: [opened, synchronize, reopened]
 
   pull_request_review:
-    types: [submitted]
+    types: [submitted] 
 
 jobs:
   notify-google-chat:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Prepare inputs
         id: prepare_inputs
@@ -39,53 +39,33 @@ jobs:
             echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
 
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            case "${{ github.event.action }}" in
-              opened)
-                echo 'PR_EVENT=📌 Pull Request Created' >> $GITHUB_ENV
-                ;;
-              synchronize)
-                echo 'PR_EVENT=🔄 Pull Request Updated' >> $GITHUB_ENV
-                ;;
-              reopened)
-                echo 'PR_EVENT=🔓 Pull Request Reopened' >> $GITHUB_ENV
-                ;;
-              *)
-                echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
-                ;;
-            esac 
-          elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
-            case "${{ github.event.review.state }}" in
-              approved)
-                echo 'PR_EVENT=✅ Pull Request Approved' >> $GITHUB_ENV
-                ;;
-              commented)
-                echo 'PR_EVENT=💬 Pull Request Commented' >> $GITHUB_ENV
-                ;;
-              changes_requested)
-                echo 'PR_EVENT=❌ Pull Request Changes Requested' >> $GITHUB_ENV
-                ;;
-              *)
-                echo 'PR_EVENT=📌 Pull Request Reviewed' >> $GITHUB_ENV
-                ;;
-            esac
+          COMMENT_BUTTON=""
+
+          if [[ "${{ github.event_name }}" == "pull_request_review" ]]; then
+            if [[ "${{ github.event.review.state }}" == "approved" ]]; then
+              PR_EVENT="🎉✅ <b>Pull Request Approved!</b>"
+            elif [[ "${{ github.event.review.state }}" == "changes_requested" ]]; then
+              PR_EVENT="⚠️❌ <b>Changes Requested!</b>"
+            elif [[ "${{ github.event.review.state }}" == "commented" ]]; then
+              PR_EVENT="💬 <b>New Comment on PR</b>"
+            fi
+            
+            # Adiciona botão se houver comentário
+            if [[ -n "${{ github.event.review.body }}" ]]; then
+              COMMENT_BUTTON='{
+                "text": "🔗 View Comment",
+                "onClick": {
+                  "openLink": {
+                    "url": "'"${{ github.event.review.html_url }}"'"
+                  }
+                }
+              }'
+            fi
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            PR_EVENT="🚀 <b>Pull Request Created/Updated</b>"
           fi
 
-      - name: Prepare Event Message
-        id: prepare_event_message
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ) ]]; then
-            MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-            MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
-            MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
-          elif [[ "${{ github.event_name }}" == "pull_request_review" ]]; then
-            MESSAGE+="👤 <b>Reviewer:</b> @${{ github.actor }}"
-          else
-            MESSAGE+="👤 <b>User:</b> @${{ github.actor }}"
-          fi
-          echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
-
-      - name: Send Notification to Google Chat
+      - name: Send Notification to Google Chat on PR Events
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
@@ -93,35 +73,38 @@ jobs:
                   "cardId": "pr-notification",
                   "card": {
                     "header": {
-                      "title": "'"$PR_EVENT"'",
-                      "subtitle": " ",
+                      "title": "GitHub Pull Request",
+                      "subtitle": "${{ github.repository }}",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "'"$MESSAGE"'"
+                          "text": "'"$PR_EVENT"'<br><b>@${{ github.actor }}</b><br><b>PR Title:</b> ${{ github.event.pull_request.title }}"
                         }
                       }]
                     },
                     {
                       "widgets": [{
                         "buttonList": {
-                          "buttons": [{
-                            "text": "🔍 View Pull Request",
-                            "onClick": {
-                              "openLink": {
-                                "url": "'"${{ github.event.pull_request.html_url }}"'"
+                          "buttons": [
+                            {
+                              "text": "🔗 View Pull Request",
+                              "onClick": {
+                                "openLink": {
+                                  "url": "${{ github.event.pull_request.html_url }}"
+                                }
                               }
                             }
-                          }]
+                            '"${COMMENT_BUTTON:-}"'
+                          ]
                         }
                       }]
                     }]
                   }
                 }],
                 "thread": {
-                  "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
+                  "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
                 }
               }' \
           "${{ secrets.google_chat_webhook }}&messageReplyOption=$REPLY_OPTION"
