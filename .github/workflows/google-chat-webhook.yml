@@ -69,7 +69,7 @@ jobs:
                 echo 'PR_EVENT=📌 Pull Request Reviewed' >> $GITHUB_ENV
                 ;;
             esac
-            echo 'HEADER_IMAGE=""' >> $GITHUB_ENV  # Remove image for review events
+            echo 'HEADER_IMAGE=' >> $GITHUB_ENV
           fi
 
       - name: Prepare Event Message
