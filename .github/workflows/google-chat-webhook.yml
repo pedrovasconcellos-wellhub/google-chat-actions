@@ -20,6 +20,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
+  pull_request_target:
+    types: [closed]
+
   pull_request_review:
     types: [submitted]
 
@@ -31,8 +34,6 @@ jobs:
       - name: Prepare inputs
         id: prepare_inputs
         run: |
-          echo "github.event.pull_request.merged='"$github.event.pull_request.merged"'"
-          echo "github.event_name='"$github.event_name"'"
           echo "HEADER_IMAGE=" >> $GITHUB_ENV
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             echo "REPLY_OPTION=MESSAGE_REPLY_OPTION_UNSPECIFIED" >> $GITHUB_ENV
@@ -40,7 +41,9 @@ jobs:
             echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
 
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event_name }}" == "pull_request_review" ]; then
+            echo 'PR_EVENT=🎉 Pull Request Merged' >> $GITHUB_ENV
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
             case "${{ github.event.action }}" in
               opened)
                 echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
