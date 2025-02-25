@@ -13,9 +13,9 @@ on:
         default: 'same_thread'
         required: false
         type: string
-    secrets:
-      google_chat_webhook: # not used yet (we're using BILLING_WEBHOOK, defined in this repo secrets)
-        required: false
+    # secrets:
+    #   google_chat_webhook: # not used yet (we're using BILLING_WEBHOOK, defined in this repo secrets)
+    #     required: false
 
   pull_request:
     types: [opened, reopened]
