@@ -75,7 +75,7 @@ jobs:
         id: prepare_event_message
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ) ]]; then
-            MESSAGE="'"$PR_EVENT"'
+            MESSAGE="'"$PR_EVENT"'<br>
                      🔗 <b>Repository:</b> ${{ github.repository }}<br>
                      📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br>
                      👤 <b>Author:</b> @${{ github.actor }}"
