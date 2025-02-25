@@ -48,7 +48,7 @@ jobs:
             echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
 
-          if [ "${{ github.event_name }}" == "pull_request_review" ]; then
+          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
             echo 'PR_EVENT=🎉 Pull Request Merged' >> $GITHUB_ENV
           elif [ "${{ github.event_name }}" == "pull_request" ]; then
             case "${{ github.event.action }}" in
