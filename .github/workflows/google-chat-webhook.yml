@@ -1,4 +1,4 @@
-name: Notify Google Chat on PR Events (Reusable)
+name: Google Chat Webhook
 
 on:
   workflow_call:
@@ -8,11 +8,11 @@ on:
         default: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
         required: false
         type: string
-      reply_mode:
-        description: True for reply, false for a new message
-        default: true
+      reply_option:
+        description: "new_thread or same_thread (optional, default same_thread)"
+        default: 'same_thread'
         required: false
-        type: boolean
+        type: string
     secrets:
       google_chat_webhook:
         required: true
@@ -21,32 +21,41 @@ on:
     types: [opened, synchronize, reopened]
 
   pull_request_review:
-    types: [submitted] 
+    types: [submitted]
 
 jobs:
   notify-google-chat:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Set input props
-        id: set_inputs
+      - name: Prepare inputs
+        id: prepare_inputs
         run: |
           echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
-          if [${{ contains(inputs.reply_mode, 'false') }}]; then
-            REPLY_MODE="MESSAGE_REPLY_OPTION_UNSPECIFIED"
+          
+          if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
+            echo "REPLY_OPTION=MESSAGE_REPLY_OPTION_UNSPECIFIED" >> $GITHUB_ENV
           else
-            REPLY_MODE="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
+            echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
-          echo "::set-output name=reply_mode::${REPLY_MODE}"
 
-      - name: Prepare PR_EVENT message
-        id: pr_event
-        run: |
-          if [ "${{ github.event_name }}" == "pull_request_review" ]; then
-            PR_EVENT="${{ github.actor }} has submitted a review for the Pull Request"
-          elif [ "${{ github.event_name }}" == "pull_request" ]; then
-            PR_EVENT="${{ github.actor }} has opened/updated the Pull Request"
-          fi
-          echo "::set-output name=pr_event::${PR_EVENT}"
+          case "${{ github.event.action }}" in
+            opened)
+              echo "PR_EVENT=Pull Request Created" >> $GITHUB_ENV
+              ;;
+            synchronize)
+              echo "PR_EVENT=Pull Request Updated" >> $GITHUB_ENV
+              ;;
+            reopened)
+              echo "PR_EVENT=Pull Request Reopened" >> $GITHUB_ENV
+              ;;
+            submitted)
+              echo "PR_EVENT=Pull Request Reviewed" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "PR_EVENT=Pull Request Event" >> $GITHUB_ENV
+              ;;
+          esac
 
       - name: Send Notification to Google Chat on PR Events
         run: |
@@ -57,13 +66,13 @@ jobs:
                   "card": {
                     "header": {
                       "title": "GitHub Pull Request",
-                      "subtitle": "${{ github.repository }}",
+                      "subtitle": "'"${{ github.repository }}"'",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>${{ github.actor }}</b> has triggered an event:<br><b>${{ github.event.pull_request.title }}</b><br>${{steps.pr_event.outputs.pr_event}}"
+                          "text": "<b>${PR_EVENT}</b> by <b>@${{ github.actor }}</b>:<br><b>'"${{ github.event.pull_request.title }}"'</b>"
                         }
                       }]
                     },
@@ -74,7 +83,7 @@ jobs:
                             "text": "View Pull Request",
                             "onClick": {
                               "openLink": {
-                                "url": "${{ github.event.pull_request.html_url }}"
+                                "url": "'"${{ github.event.pull_request.html_url }}"'"
                               }
                             }
                           }]
@@ -84,7 +93,7 @@ jobs:
                   }
                 }],
                 "thread": {
-                  "threadKey": "${{ github.repository }}/${{ github.event.pull_request.number }}"
+                  "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
                 }
               }' \
-          "${{ secrets.google_chat_webhook }}&messageReplyOption=${{steps.set_inputs.outputs.reply_mode}}"
+          "${{ secrets.google_chat_webhook }}&messageReplyOption=$REPLY_OPTION"
