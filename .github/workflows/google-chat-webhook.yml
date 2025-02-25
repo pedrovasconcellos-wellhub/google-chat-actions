@@ -50,26 +50,17 @@ jobs:
               reopened)
                 echo 'PR_EVENT=🔓 Pull Request Reopened' >> $GITHUB_ENV
                 ;;
+              closed)
+                if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
+                  echo 'PR_EVENT=🎉 Pull Request Merged' >> $GITHUB_ENV
+                else
+                  echo 'PR_EVENT=❌ Pull Request Closed' >> $GITHUB_ENV
+                fi
+                ;;
               *)
                 echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
                 ;;
             esac 
-          elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
-            case "${{ github.event.review.state }}" in
-              approved)
-                echo 'PR_EVENT=✅ Pull Request Approved' >> $GITHUB_ENV
-                ;;
-              commented)
-                echo 'PR_EVENT=💬 Pull Request Commented' >> $GITHUB_ENV
-                ;;
-              changes_requested)
-                echo 'PR_EVENT=❌ Pull Request Changes Requested' >> $GITHUB_ENV
-                ;;
-              *)
-                echo 'PR_EVENT=📌 Pull Request Reviewed' >> $GITHUB_ENV
-                ;;
-            esac
-            echo 'HEADER_IMAGE=' >> $GITHUB_ENV
           fi
 
       - name: Prepare Event Message
