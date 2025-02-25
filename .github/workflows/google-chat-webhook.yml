@@ -74,7 +74,6 @@ jobs:
       - name: Prepare Event Message
         id: prepare_event_message
         run: |
-          MESSAGE="'"$PR_EVENT"'</b><br/>"
           if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ) ]]; then
             MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
             MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
