@@ -13,9 +13,10 @@ on:
         default: 'same_thread'
         required: false
         type: string
-    # secrets:
-    #   google_chat_webhook: # not used yet (we're using BILLING_WEBHOOK, defined in this repo secrets)
-    #     required: false
+    secrets:
+      notify_pr_webhook:
+        description: "Google Chat webhook URL to notify Pull Requests events"
+        required: true
 
   pull_request:
     types: [opened, reopened]
@@ -32,7 +33,6 @@ jobs:
       - name: Prepare inputs
         id: prepare_inputs
         run: |
-          echo "The secret value is ${{ secrets.BILLING_WEBHOOK }}"
           echo "HEADER_IMAGE=" >> $GITHUB_ENV
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             echo "REPLY_OPTION=MESSAGE_REPLY_OPTION_UNSPECIFIED" >> $GITHUB_ENV
@@ -123,4 +123,4 @@ jobs:
                   "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
                 }
               }' \
-          "${{ secrets.BILLING_WEBHOOK }}&messageReplyOption=$REPLY_OPTION"
+          "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
