@@ -39,23 +39,39 @@ jobs:
             echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
 
-          case "${{ github.event.action }}" in
-            opened)
-              echo "PR_EVENT=Pull Request Created" >> $GITHUB_ENV
-              ;;
-            synchronize)
-              echo "PR_EVENT=Pull Request Updated" >> $GITHUB_ENV
-              ;;
-            reopened)
-              echo "PR_EVENT=Pull Request Reopened" >> $GITHUB_ENV
-              ;;
-            submitted)
-              echo "PR_EVENT=Pull Request Reviewed" >> $GITHUB_ENV
-              ;;
-            *)
-              echo "PR_EVENT=Pull Request Event" >> $GITHUB_ENV
-              ;;
-          esac
+          # Definir mensagem do evento baseado no tipo
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            case "${{ github.event.action }}" in
+              opened)
+                echo 'PR_EVENT=📌 Pull Request Created' >> $GITHUB_ENV
+                ;;
+              synchronize)
+                echo 'PR_EVENT=🔄 Pull Request Updated' >> $GITHUB_ENV
+                ;;
+              reopened)
+                echo 'PR_EVENT=🔓 Pull Request Reopened' >> $GITHUB_ENV
+                ;;
+              *)
+                echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
+                ;;
+            esac
+          
+          elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
+            case "${{ github.event.review.state }}" in
+              approved)
+                echo 'PR_EVENT=✅ Pull Request Approved' >> $GITHUB_ENV
+                ;;
+              commented)
+                echo 'PR_EVENT=💬 Pull Request Commented' >> $GITHUB_ENV
+                ;;
+              changes_requested)
+                echo 'PR_EVENT=❌ Pull Request Changes Requested' >> $GITHUB_ENV
+                ;;
+              *)
+                echo 'PR_EVENT=📌 Pull Request Reviewed' >> $GITHUB_ENV
+                ;;
+            esac
+          fi
 
       - name: Send Notification to Google Chat on PR Events
         run: |
