@@ -39,7 +39,6 @@ jobs:
             echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
 
-          # Definir mensagem do evento baseado no tipo
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             case "${{ github.event.action }}" in
               opened)
@@ -54,8 +53,7 @@ jobs:
               *)
                 echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
                 ;;
-            esac
-          
+            esac 
           elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
             case "${{ github.event.review.state }}" in
               approved)
@@ -73,7 +71,21 @@ jobs:
             esac
           fi
 
-      - name: Send Notification to Google Chat on PR Events
+      - name: Prepare Event Message
+        id: prepare_event_message
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ) ]]; then
+            MESSAGE="'"$PR_EVENT"'
+                     🔗 <b>Repository:</b> ${{ github.repository }}<br>
+                     📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br>
+                     👤 <b>Author:</b> @${{ github.actor }}"
+          else
+            MESSAGE="'"$PR_EVENT"'
+                     👤 <b>Reviewer:</b> @${{ github.actor }}"
+          fi
+          echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
+
+      - name: Send Notification to Google Chat
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
@@ -81,14 +93,14 @@ jobs:
                   "cardId": "pr-notification",
                   "card": {
                     "header": {
-                      "title": "GitHub Pull Request",
-                      "subtitle": "'"${{ github.repository }}"'",
+                      "title": "'"$PR_EVENT"'",
+                      "subtitle": " ",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>'"$PR_EVENT"'</b> by <b>@${{ github.actor }}</b>:<br><b>'"${{ github.event.pull_request.title }}"'</b>"
+                          "text": "'"$MESSAGE"'"
                         }
                       }]
                     },
@@ -96,7 +108,7 @@ jobs:
                       "widgets": [{
                         "buttonList": {
                           "buttons": [{
-                            "text": "View Pull Request",
+                            "text": "🔍 View Pull Request",
                             "onClick": {
                               "openLink": {
                                 "url": "'"${{ github.event.pull_request.html_url }}"'"
