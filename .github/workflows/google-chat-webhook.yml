@@ -18,10 +18,7 @@ on:
         required: true
 
   pull_request:
-    types: [opened, synchronize, reopened, closed]
-
-  pull_request_target:
-    types: [closed]
+    types: [opened, reopened]
 
   pull_request_review:
     types: [submitted]
@@ -34,9 +31,9 @@ jobs:
     steps:
     - run: echo "The PR was merged"
 
-  notify-google-chat:
+  notify-pr:
     runs-on: ubuntu-latest
-
+    if: github.event_name == "pull_request" || github.event_name = "pull_request_review"
     steps:
       - name: Prepare inputs
         id: prepare_inputs
@@ -47,27 +44,15 @@ jobs:
           else
             echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
           fi
-
-          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
-            echo 'PR_EVENT=🎉 Pull Request Merged' >> $GITHUB_ENV
-          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+          
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
             case "${{ github.event.action }}" in
               opened)
                 echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
                 echo 'PR_EVENT=📌 Pull Request Created' >> $GITHUB_ENV
                 ;;
-              synchronize)
-                echo 'PR_EVENT=🔄 Pull Request Updated' >> $GITHUB_ENV
-                ;;
               reopened)
                 echo 'PR_EVENT=🔓 Pull Request Reopened' >> $GITHUB_ENV
-                ;;
-              closed)
-                if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
-                  echo 'PR_EVENT=🎉 Pull Request Merged' >> $GITHUB_ENV
-                else
-                  echo 'PR_EVENT=❌ Pull Request Closed' >> $GITHUB_ENV
-                fi
                 ;;
               *)
                 echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
