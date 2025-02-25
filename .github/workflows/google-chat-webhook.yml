@@ -18,7 +18,7 @@ on:
         required: true
 
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
 
   pull_request_review:
     types: [submitted]
@@ -66,7 +66,7 @@ jobs:
       - name: Prepare Event Message
         id: prepare_event_message
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ) ]]; then
+          if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" ]]; then
             MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
             MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
             MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
