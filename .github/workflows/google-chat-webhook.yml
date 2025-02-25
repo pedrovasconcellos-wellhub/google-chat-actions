@@ -20,9 +20,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
 
-  pull_request_target:
-    types: [closed]
-
   pull_request_review:
     types: [submitted]
 
@@ -66,12 +63,6 @@ jobs:
                 echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
                 ;;
             esac
-          elif [ "${{ github.event_name }}" == "pull_request_target" ]; then
-            if [ "${{ github.event.pull_request.merged }}" == "true" ]; then
-              echo 'PR_EVENT=🎉 Pull Request Merged' >> $GITHUB_ENV
-            else
-              echo 'PR_EVENT=❌ Pull Request Closed' >> $GITHUB_ENV
-            fi
           elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
             case "${{ github.event.review.state }}" in
               approved)
