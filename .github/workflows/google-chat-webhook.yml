@@ -74,14 +74,15 @@ jobs:
       - name: Prepare Event Message
         id: prepare_event_message
         run: |
+          MESSAGE="'"$PR_EVENT"'</b><br/>"
           if [[ "${{ github.event_name }}" == "pull_request" && ( "${{ github.event.action }}" == "opened" || "${{ github.event.action }}" == "reopened" ) ]]; then
-            MESSAGE="'"$PR_EVENT"'<br>
-                     🔗 <b>Repository:</b> ${{ github.repository }}<br>
-                     📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br>
-                     👤 <b>Author:</b> @${{ github.actor }}"
+            MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
+            MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+            MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
+          elif [[ "${{ github.event_name }}" == "pull_request_review" ]]; then
+            MESSAGE+="👤 <b>Reviewer:</b> @${{ github.actor }}"
           else
-            MESSAGE="'"$PR_EVENT"'
-                     👤 <b>Reviewer:</b> @${{ github.actor }}"
+            MESSAGE+="👤 <b>User:</b> @${{ github.actor }}"
           fi
           echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
 
