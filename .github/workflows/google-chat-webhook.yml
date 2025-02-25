@@ -72,7 +72,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>${PR_EVENT}</b> by <b>@${{ github.actor }}</b>:<br><b>'"${{ github.event.pull_request.title }}"'</b>"
+                          "text": "<b>$PR_EVENT</b> by <b>@${{ github.actor }}</b>:<br><b>'"${{ github.event.pull_request.title }}"'</b>"
                         }
                       }]
                     },
