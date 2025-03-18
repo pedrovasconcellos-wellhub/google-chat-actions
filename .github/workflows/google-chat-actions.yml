@@ -19,66 +19,57 @@ on:
         required: true
 
 jobs:
-
   notify-pr:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
+    runs-on: self-hosted
+    if: github.event_name == 'pull_request'
     steps:
-      - name: Prepare inputs
-        id: prepare_inputs
+      - name: Prepare message
+        id: prepare_message
         run: |
-          echo "HEADER_IMAGE=" >> $GITHUB_ENV
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
-            echo "REPLY_OPTION=MESSAGE_REPLY_OPTION_UNSPECIFIED" >> $GITHUB_ENV
+            REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
           else
-            echo "REPLY_OPTION=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD" >> $GITHUB_ENV
-          fi
-          
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            case "${{ github.event.action }}" in
-              opened)
-                echo "HEADER_IMAGE=${{ inputs.header_image }}" >> $GITHUB_ENV
-                echo 'PR_EVENT=📌 Pull Request Created' >> $GITHUB_ENV
-                ;;
-              reopened)
-                echo 'PR_EVENT=🔓 Pull Request Reopened' >> $GITHUB_ENV
-                ;;
-              *)
-                echo 'PR_EVENT=📌 Pull Request Event' >> $GITHUB_ENV
-                ;;
-            esac
-          elif [ "${{ github.event_name }}" == "pull_request_review" ]; then
-            case "${{ github.event.review.state }}" in
-              approved)
-                echo 'PR_EVENT=✅ Pull Request Approved' >> $GITHUB_ENV
-                ;;
-              commented)
-                echo 'PR_EVENT=💬 Pull Request Commented' >> $GITHUB_ENV
-                ;;
-              changes_requested)
-                echo 'PR_EVENT=❌ Pull Request Changes Requested' >> $GITHUB_ENV
-                ;;
-              *)
-                echo 'PR_EVENT=📌 Pull Request Reviewed' >> $GITHUB_ENV
-                ;;
-            esac
+            REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
 
-      - name: Prepare Event Message
-        id: prepare_event_message
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "opened" ]]; then
-            MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-            MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
-            MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
-          elif [[ "${{ github.event_name }}" == "pull_request_review" ]]; then
-            MESSAGE+="👤 <b>Reviewer:</b> @${{ github.actor }}"
-          else
-            MESSAGE+="👤 <b>User:</b> @${{ github.actor }}"
-          fi
+          case "${{ github.event.action }}" in
+            opened)
+              if [ "${{ github.event.pull_request.draft }}" == "true" ]; then
+                echo "Notification skipped because the trigger is a draft PR creation"
+                exit 0
+              else
+                HEADER_IMAGE="${{ inputs.header_image }}"
+                HEADER_TITLE="📌 Pull Request Created"
+                MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
+                MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+              fi
+              ;;
+            reopened)
+              HEADER_TITLE="🔓 Pull Request Reopened"
+              ;;
+            ready_for_review)
+              HEADER_IMAGE="${{ inputs.header_image }}"
+              HEADER_TITLE="🚀 Pull Request Ready for Review"
+              MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
+              MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+              ;;
+            converted_to_draft)
+              HEADER_TITLE="📝 Pull Request Converted to Draft"
+              ;;
+            *)
+              HEADER_TITLE="📌 Pull Request Event"
+              ;;
+          esac
+          
+          MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
+          
+          echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
+          echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
+          echo "HEADER_IMAGE=$HEADER_IMAGE" >> $GITHUB_ENV
           echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
 
-      - name: Send Notification to Google Chat
+      - name: Send PR Notification to Google Chat
+        id: send_notification
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
@@ -86,8 +77,7 @@ jobs:
                   "cardId": "pr-notification",
                   "card": {
                     "header": {
-                      "title": "'"$PR_EVENT"'",
-                      "subtitle": " ",
+                      "title": "'"$HEADER_TITLE"'",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
                     "sections": [{
@@ -110,6 +100,108 @@ jobs:
                           }]
                         }
                       }]
+                    }]
+                  }
+                }],
+                "thread": {
+                  "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
+                }
+              }' \
+          "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
+
+  notify-pr-review:
+    runs-on: self-hosted
+    if: github.event_name == 'pull_request_review'
+    steps:
+      - name: Prepare message
+        id: prepare_message
+        run: |
+          if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
+            REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
+          else
+            REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
+          fi
+          
+          case "${{ github.event.review.state }}" in
+            approved)
+              HEADER_TITLE="✅ Pull Request Approved"
+              BUTTON_TEXT="🔍 View Approval"
+              ;;
+            commented)
+              HEADER_TITLE="💬 Pull Request Commented"
+              BUTTON_TEXT="🔍 View Comment"
+              ;;
+            changes_requested)
+              HEADER_TITLE="❌ Pull Request Changes Requested"
+              BUTTON_TEXT="🔍 View Requested Changes"
+              ;;
+            *)
+              HEADER_TITLE="📌 Pull Request Review Event"
+              BUTTON_TEXT="🔍 View Event"
+              ;;
+          esac
+                    
+          echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
+          echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
+          echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
+          echo "BUTTON_URL=${{ github.event.review.html_url }}" >> $GITHUB_ENV
+
+      - name: Send Notification to Google Chat
+        id: send_notification
+        run: |
+          ESCAPED_BODY=$(echo "${{ github.event.review.body }}" | jq -Rs '.')
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "cardsV2": [{
+                  "cardId": "pr-notification",
+                  "card": {
+                    "header": {
+                      "title": "'"$HEADER_TITLE"'",
+                      "subtitle": "'"by @${{ github.actor }}"'"
+                    },
+                    "sections": [{
+                      "collapsible": true,
+                      "collapseControl": {
+                        "horizontalAlignment": "CENTER",
+                        "collapseButton": {
+                          "icon": {
+                            "materialIcon": {
+                              "name": "visibility_off"
+                            }
+                          },
+                          "text": "Hide comment",
+                          "type": "BORDERLESS"
+                        },
+                        "expandButton": {
+                          "icon": {
+                            "materialIcon": {
+                              "name": "visibility"
+                            }
+                          },
+                          "text": "Show comment",
+                          "type": "BORDERLESS"
+                        }
+                      },
+                      "uncollapsibleWidgetsCount": 1,
+                      "widgets": [
+                        {
+                          "buttonList": {
+                            "buttons": [{
+                              "text": "'"$BUTTON_TEXT"'",
+                                "onClick": {
+                                  "openLink": {
+                                    "url": "'"$BUTTON_URL"'"
+                                  }
+                                }
+                              }]
+                          }
+                        },
+                        {
+                          "textParagraph": {
+                            "text": '"$ESCAPED_BODY"',
+                            "maxLines": 5
+                          }
+                        }]
                     }]
                   }
                 }],
