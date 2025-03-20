@@ -140,16 +140,30 @@ jobs:
               BUTTON_TEXT="🔍 View Event"
               ;;
           esac
-                    
+
+          if [ -n "${{ github.event.review.body }}" ]; then
+            MESSAGE="${{ github.event.review.body }}"
+          else
+            MESSAGE=""
+            for comment in $(jq -c '.review.comments[]' <<< '${{ toJson(github.event.review) }}'); do
+              COMMENT_BODY=$(jq -r '.body' <<< "$comment")
+              COMMENT_PATH=$(jq -r '.path' <<< "$comment")
+              COMMENT_LINE=$(jq -r '.line' <<< "$comment")
+              MESSAGE+="🔹 <b>File:</b> ${COMMENT_PATH} (Line ${COMMENT_LINE})<br/>"
+              MESSAGE+="💬 ${COMMENT_BODY}<br/><br/>"
+            done
+          fi
+
+          ESCAPED_MESSAGE=$(echo "$MESSAGE" | jq -Rs '.')
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
           echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
           echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
           echo "BUTTON_URL=${{ github.event.review.html_url }}" >> $GITHUB_ENV
+          echo "ESCAPED_MESSAGE=$ESCAPED_MESSAGE" >> $GITHUB_ENV
 
       - name: Send Notification to Google Chat
         id: send_notification
         run: |
-          ESCAPED_BODY=$(echo "${{ github.event.review.body }}" | jq -Rs '.')
           JSON_PAYLOAD='{
             "cardsV2": [{
               "cardId": "pr-notification",
@@ -171,10 +185,10 @@ jobs:
                     }
                   }'
 
-          if [ -n "$ESCAPED_BODY" ]; then
+          if [ -n "$ESCAPED_MESSAGE" ]; then
             JSON_PAYLOAD+=',{
               "textParagraph": {
-                  "text": '"$ESCAPED_BODY"',
+                  "text": '"$$ESCAPED_MESSAGE"',
                   "maxLines": 5
                 }
               }'
@@ -182,7 +196,7 @@ jobs:
             
           JSON_PAYLOAD+=']'
 
-          if [ -n "$ESCAPED_BODY" ]; then
+          if [ -n "$ESCAPED_MESSAGE" ]; then
             JSON_PAYLOAD+=',
               "collapsible": true,
               "collapseControl": {
