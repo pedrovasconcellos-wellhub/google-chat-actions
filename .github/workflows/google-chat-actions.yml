@@ -33,7 +33,9 @@ jobs:
           fi
 
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | jq -Rs '@json')
-
+          echo "PR TITLE:"
+          echo $PR_TITLE
+          
           case "${{ github.event.action }}" in
             opened)
               if [ "${{ github.event.pull_request.draft }}" == "true" ]; then
