@@ -32,18 +32,8 @@ jobs:
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
 
-          PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | jq -Rs '@json')
-          echo "PR TITLE:"
+          PR_TITLE=$(jq -n --arg text "${{ github.event.pull_request.title }}" -r '$text')
           echo $PR_TITLE
-          echo "GH TITLE:"
-          echo ${{ github.event.pull_request.title }}
-          echo "GH TITLE 2:"
-          echo "${{ github.event.pull_request.title }}"
-          NEW_PR_TITLE=$(jq -n --arg text "${{ github.event.pull_request.title }}" '$text')
-          echo $NEW_PR_TITLE
-          NEW_PR_TITLE1=$(jq -n --arg text "${{ github.event.pull_request.title }}" -r '$text')
-          echo $NEW_PR_TITLE1
-
           
           case "${{ github.event.action }}" in
             opened)
