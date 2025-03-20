@@ -86,7 +86,7 @@ jobs:
                   "cardId": "pr-notification",
                   "card": {
                     "header": {
-                      "title": '"$ESCAPED_TITLE"',
+                      "title": "'"$HEADER_TITLE"'",
                       "subtitle": "'"$HEADER_SUBTITLE"'",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
