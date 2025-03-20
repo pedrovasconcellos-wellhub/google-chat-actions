@@ -172,7 +172,7 @@ jobs:
       - name: Send Notification to Google Chat
         id: send_notification
         run: |
-          ESCAPED_COMMENT=$(echo "$COMMENT" | jq -Rs '. | @json')
+          ESCAPED_COMMENT=$(echo '$COMMENT' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | jq -n --arg text "$(cat)" -r '$text')
           JSON_PAYLOAD='{
             "cardsV2": [{
               "cardId": "pr-notification",
