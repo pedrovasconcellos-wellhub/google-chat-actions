@@ -111,7 +111,7 @@ jobs:
 
   notify-pr-review:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review'
+    if: github.event_name == 'pull_request_review' || github.event_name == 'issue_comment'
     steps:
       - name: Prepare message
         id: prepare_message
@@ -122,47 +122,37 @@ jobs:
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
 
-          case "${{ github.event.review.state }}" in
-            approved)
-              HEADER_TITLE="✅ @${{ github.actor }} approved"
-              BUTTON_TEXT="🔍 View Approval"
-              ;;
-            commented)
-              HEADER_TITLE="💬 @${{ github.actor }} left a comment"
-              BUTTON_TEXT="🔍 View Comment"
-              ;;
-            changes_requested)
-              HEADER_TITLE="❌ @${{ github.actor }} requested changes"
-              BUTTON_TEXT="🔍 View Requested Changes"
-              ;;
-            *)
-              HEADER_TITLE="📌 @${{ github.actor }} reviewed"
-              BUTTON_TEXT="🔍 View Event"
-              ;;
-          esac
-
-          if [ -n "${{ github.event.review.body }}" ]; then
-            MESSAGE="${{ github.event.review.body }}"
-            echo "Obtendo do review.body"
-            echo "$MESSAGE"
+          if [ "${{ github.event_name }}" == "issue_comment" ]; then
+            HEADER_TITLE="💬 @${{ github.actor }} left a comment"
+            BUTTON_TEXT="🔍 View Comment"
+            BUTTON_URL="${{ github.event.comment.html_url }}"
+            ESCAPED_MESSAGE=$(echo "${{ github.event.comment.body }}" | jq -Rs '.')
           else
-            MESSAGE=""
-            for comment in $(jq -c '.review.comments[]' <<< '${{ toJson(github.event.review) }}'); do
-              COMMENT_BODY=$(jq -r '.body' <<< "$comment")
-              COMMENT_PATH=$(jq -r '.path' <<< "$comment")
-              COMMENT_LINE=$(jq -r '.line' <<< "$comment")
-              MESSAGE+="🔹 <b>File:</b> ${COMMENT_PATH} (Line ${COMMENT_LINE})<br/>"
-              MESSAGE+="💬 ${COMMENT_BODY}<br/><br/>"
-            done
-            echo "Obtendo do review.comments"
-            echo "$MESSAGE"
-          fi
+            BUTTON_URL=${{ github.event.review.html_url }}
+            ESCAPED_MESSAGE=$(echo "${{ github.event.review.body }}" | jq -Rs '.')
+            case "${{ github.event.review.state }}" in
+              approved)
+                HEADER_TITLE="✅ @${{ github.actor }} approved"
+                BUTTON_TEXT="🔍 View Approval"
+                ;;
+              commented)
+                HEADER_TITLE="💬 @${{ github.actor }} left a comment"
+                BUTTON_TEXT="🔍 View Comment"
+                ;;
+              changes_requested)
+                HEADER_TITLE="❌ @${{ github.actor }} requested changes"
+                BUTTON_TEXT="🔍 View Requested Changes"
+                ;;
+              *)
+                HEADER_TITLE="📌 @${{ github.actor }} reviewed"
+                BUTTON_TEXT="🔍 View Event"
+                ;;
+            esac
 
-          ESCAPED_MESSAGE=$(echo "$MESSAGE" | jq -Rs '.')
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
           echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
           echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
-          echo "BUTTON_URL=${{ github.event.review.html_url }}" >> $GITHUB_ENV
+          echo "BUTTON_URL=$BUTTON_URL" >> $GITHUB_ENV
           echo "ESCAPED_MESSAGE=$ESCAPED_MESSAGE" >> $GITHUB_ENV
 
       - name: Send Notification to Google Chat
