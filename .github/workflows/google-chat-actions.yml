@@ -40,31 +40,38 @@ jobs:
               else
                 HEADER_IMAGE="${{ inputs.header_image }}"
                 HEADER_TITLE="📌 Pull Request Created"
+                HEADER_SUBTITLE=""
                 MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
                 MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+                MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               fi
               ;;
             reopened)
-              HEADER_TITLE="🔓 Pull Request Reopened"
+              HEADER_TITLE=""
+              HEADER_SUBTITLE="🔓 @${{ github.actor }} reopened the PR"
               ;;
             ready_for_review)
               HEADER_IMAGE="${{ inputs.header_image }}"
               HEADER_TITLE="🚀 Pull Request Ready for Review"
+              HEADER_SUBTITLE=""
               MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
               MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+              MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               ;;
             converted_to_draft)
-              HEADER_TITLE="📝 Pull Request Converted to Draft"
+              HEADER_TITLE=""
+              HEADER_SUBTITLE="📝 @${{ github.actor }} converted the PR to draft"
               ;;
             *)
               HEADER_TITLE="📌 Pull Request Event"
+              HEADER_SUBTITLE=""
+              MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               ;;
           esac
           
-          MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
-          
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
           echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
+          echo "HEADER_SUBTITLE=$HEADER_SUBTITLE" >> $GITHUB_ENV
           echo "HEADER_IMAGE=$HEADER_IMAGE" >> $GITHUB_ENV
           echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
 
@@ -78,6 +85,7 @@ jobs:
                   "card": {
                     "header": {
                       "title": "'"$HEADER_TITLE"'",
+                      "subtitle": "'"$HEADER_SUBTITLE"'",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
                     "sections": [{
@@ -123,7 +131,7 @@ jobs:
           fi
           
           if [ "${{ github.event_name }}" == "issue_comment" ]; then
-            HEADER_TITLE="💬 @${{ github.actor }} left a comment"
+            SUBTITLE="💬 @${{ github.actor }} left a comment"
             BUTTON_TEXT="🔍 View Comment"
             BUTTON_URL="${{ github.event.comment.html_url }}"
             COMMENT="${{ github.event.comment.body }}"
@@ -134,26 +142,26 @@ jobs:
             PR_NUMBER="${{ github.event.pull_request.number }}"
             case "${{ github.event.review.state }}" in
               approved)
-                HEADER_TITLE="✅ @${{ github.actor }} approved"
+                HEADER_SUBTITLE="✅ @${{ github.actor }} approved the PR"
                 BUTTON_TEXT="🔍 View Approval"
                 ;;
               commented)
-                HEADER_TITLE="💬 @${{ github.actor }} left a comment"
+                HEADER_SUBTITLE="💬 @${{ github.actor }} left a comment"
                 BUTTON_TEXT="🔍 View Comment"
                 ;;
               changes_requested)
-                HEADER_TITLE="❌ @${{ github.actor }} requested changes"
+                HEADER_SUBTITLE="❌ @${{ github.actor }} requested changes"
                 BUTTON_TEXT="🔍 View Requested Changes"
                 ;;
               *)
-                HEADER_TITLE="📌 @${{ github.actor }} reviewed"
+                HEADER_SUBTITLE="📌 @${{ github.actor }} reviewed"
                 BUTTON_TEXT="🔍 View Event"
                 ;;
             esac
           fi
                     
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
-          echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
+          echo "HEADER_SUBTITLE=$HEADER_SUBTITLE" >> $GITHUB_ENV
           echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
           echo "BUTTON_URL=$BUTTON_URL" >> $GITHUB_ENV
           echo "COMMENT=$COMMENT" >> $GITHUB_ENV
@@ -168,7 +176,7 @@ jobs:
               "cardId": "pr-notification",
               "card": {
                 "header": {
-                  "subtitle": "'"$HEADER_TITLE"'"
+                  "subtitle": "'"$HEADER_SUBTITLE"'"
                 },
                 "sections": [{
                   "widgets": [{
