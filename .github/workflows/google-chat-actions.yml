@@ -92,7 +92,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": '"'"$ESCAPED_MESSAGE"'"'"
+                          "text": "<b>oi \"Revert\": hahaha"
                         }
                       }]
                     },
