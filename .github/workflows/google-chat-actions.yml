@@ -20,7 +20,7 @@ on:
 
 jobs:
   notify-pr:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
       - name: Prepare message
@@ -110,7 +110,7 @@ jobs:
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
   notify-pr-review:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_review'
     steps:
       - name: Prepare message
