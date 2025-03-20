@@ -21,7 +21,7 @@ on:
 jobs:
   notify-pr:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.event_name = "issue_comment"
+    if: github.event_name == 'pull_request'
     steps:
       - name: Prepare message
         id: prepare_message
