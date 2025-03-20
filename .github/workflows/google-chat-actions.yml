@@ -33,7 +33,6 @@ jobs:
           fi
 
           PR_TITLE=$(jq -n --arg text '${{ github.event.pull_request.title }}' -r '$text')
-          echo $PR_TITLE
           
           case "${{ github.event.action }}" in
             opened)
@@ -45,7 +44,7 @@ jobs:
                 HEADER_TITLE="📌 Pull Request Created"
                 HEADER_SUBTITLE=""
                 MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-                MESSAGE+="📄 <b>Title:</b> $NEW_PR_TITLE<br/>"
+                MESSAGE+="📄 <b>Title:</b> $PR_TITLE<br/>"
                 MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               fi
               ;;
