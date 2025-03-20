@@ -143,6 +143,8 @@ jobs:
 
           if [ -n "${{ github.event.review.body }}" ]; then
             MESSAGE="${{ github.event.review.body }}"
+            echo "Obtendo do review.body"
+            echo "$MESSAGE"
           else
             MESSAGE=""
             for comment in $(jq -c '.review.comments[]' <<< '${{ toJson(github.event.review) }}'); do
@@ -152,6 +154,8 @@ jobs:
               MESSAGE+="🔹 <b>File:</b> ${COMMENT_PATH} (Line ${COMMENT_LINE})<br/>"
               MESSAGE+="💬 ${COMMENT_BODY}<br/><br/>"
             done
+            echo "Obtendo do review.comments"
+            echo "$MESSAGE"
           fi
 
           ESCAPED_MESSAGE=$(echo "$MESSAGE" | jq -Rs '.')
