@@ -188,7 +188,7 @@ jobs:
           if [ -n "$ESCAPED_MESSAGE" ]; then
             JSON_PAYLOAD+=',{
               "textParagraph": {
-                  "text": '"$$ESCAPED_MESSAGE"',
+                  "text": '"$ESCAPED_MESSAGE"',
                   "maxLines": 5
                 }
               }'
