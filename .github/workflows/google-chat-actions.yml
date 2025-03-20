@@ -121,22 +121,22 @@ jobs:
           else
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
-          
+
           case "${{ github.event.review.state }}" in
             approved)
-              HEADER_TITLE="✅ Pull Request Approved"
+              HEADER_TITLE="✅ @${{ github.actor }} approved"
               BUTTON_TEXT="🔍 View Approval"
               ;;
             commented)
-              HEADER_TITLE="💬 Pull Request Commented"
+              HEADER_TITLE="💬 @${{ github.actor }} left a comment"
               BUTTON_TEXT="🔍 View Comment"
               ;;
             changes_requested)
-              HEADER_TITLE="❌ Pull Request Changes Requested"
+              HEADER_TITLE="❌ @${{ github.actor }} requested changes"
               BUTTON_TEXT="🔍 View Requested Changes"
               ;;
             *)
-              HEADER_TITLE="📌 Pull Request Review Event"
+              HEADER_TITLE="📌 @${{ github.actor }} reviewed"
               BUTTON_TEXT="🔍 View Event"
               ;;
           esac
@@ -150,63 +150,70 @@ jobs:
         id: send_notification
         run: |
           ESCAPED_BODY=$(echo "${{ github.event.review.body }}" | jq -Rs '.')
-          curl -X POST -H "Content-Type: application/json" \
-          -d '{
-                "cardsV2": [{
-                  "cardId": "pr-notification",
-                  "card": {
-                    "header": {
-                      "title": "'"$HEADER_TITLE"'",
-                      "subtitle": "'"by @${{ github.actor }}"'"
-                    },
-                    "sections": [{
-                      "collapsible": true,
-                      "collapseControl": {
-                        "horizontalAlignment": "CENTER",
-                        "collapseButton": {
-                          "icon": {
-                            "materialIcon": {
-                              "name": "visibility_off"
-                            }
-                          },
-                          "text": "Hide comment",
-                          "type": "BORDERLESS"
-                        },
-                        "expandButton": {
-                          "icon": {
-                            "materialIcon": {
-                              "name": "visibility"
-                            }
-                          },
-                          "text": "Show comment",
-                          "type": "BORDERLESS"
+          JSON_PAYLOAD='{
+            "cardsV2": [{
+              "cardId": "pr-notification",
+              "card": {
+                "header": {
+                  "subtitle": "'"$HEADER_TITLE"'"
+                },
+                "sections": [{
+                  "widgets": [{
+                    "buttonList": {
+                      "buttons": [{
+                        "text": "'"$BUTTON_TEXT"'",
+                        "onClick": {
+                          "openLink": {
+                            "url": "'"$BUTTON_URL"'"
+                          }
                         }
-                      },
-                      "uncollapsibleWidgetsCount": 1,
-                      "widgets": [
-                        {
-                          "buttonList": {
-                            "buttons": [{
-                              "text": "'"$BUTTON_TEXT"'",
-                                "onClick": {
-                                  "openLink": {
-                                    "url": "'"$BUTTON_URL"'"
-                                  }
-                                }
-                              }]
-                          }
-                        },
-                        {
-                          "textParagraph": {
-                            "text": '"$ESCAPED_BODY"',
-                            "maxLines": 5
-                          }
-                        }]
-                    }]
-                  }
-                }],
-                "thread": {
-                  "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
+                      }]
+                    }
+                  }'
+
+          if [ -n "${{ github.event.review.body }}" ]; then
+            JSON_PAYLOAD+=',{
+              "textParagraph": {
+                  "text": '"$ESCAPED_BODY"',
+                  "maxLines": 5
                 }
-              }' \
+              }'
+          fi
+            
+          JSON_PAYLOAD+=']'
+
+          if [ -n "${{ github.event.review.body }}" ]; then
+            JSON_PAYLOAD+=',
+              "collapsible": true,
+              "collapseControl": {
+                "horizontalAlignment": "CENTER",
+                "collapseButton": {
+                  "icon": {
+                    "materialIcon": {
+                      "name": "visibility_off"
+                    }
+                  },
+                  "text": "Hide comment",
+                  "type": "BORDERLESS"
+                },
+                "expandButton": {
+                  "icon": {
+                    "materialIcon": {
+                      "name": "visibility"
+                    }
+                  },
+                  "text": "Preview comment",
+                  "type": "BORDERLESS"
+                }
+              },
+              "uncollapsibleWidgetsCount": 1'
+          fi
+
+          JSON_PAYLOAD+='}]}}],
+            "thread": {
+              "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
+            }
+          }'
+
+          echo "$JSON_PAYLOAD" | curl -X POST -H "Content-Type: application/json" -d @- \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
