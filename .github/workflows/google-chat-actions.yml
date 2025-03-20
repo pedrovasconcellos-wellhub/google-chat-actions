@@ -111,7 +111,7 @@ jobs:
 
   notify-pr-review:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review'
+    if: github.event_name == 'pull_request_review' || github.event_name = "issue_comment"
     steps:
       - name: Prepare message
         id: prepare_message
@@ -121,35 +121,45 @@ jobs:
           else
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
-
-          case "${{ github.event.review.state }}" in
-            approved)
-              HEADER_TITLE="✅ @${{ github.actor }} approved"
-              BUTTON_TEXT="🔍 View Approval"
-              ;;
-            commented)
-              HEADER_TITLE="💬 @${{ github.actor }} left a comment"
-              BUTTON_TEXT="🔍 View Comment"
-              ;;
-            changes_requested)
-              HEADER_TITLE="❌ @${{ github.actor }} requested changes"
-              BUTTON_TEXT="🔍 View Requested Changes"
-              ;;
-            *)
-              HEADER_TITLE="📌 @${{ github.actor }} reviewed"
-              BUTTON_TEXT="🔍 View Event"
-              ;;
-          esac
+          
+          if [ "${{ github.event_name }}" == "issue_comment" ]; then
+            HEADER_TITLE="💬 @${{ github.actor }} left a comment"
+            BUTTON_TEXT="🔍 View Comment"
+            BUTTON_URL="${{ github.event.comment.html_url }}"
+            COMMENT="${{ github.event.comment.body }}"
+          else
+            BUTTON_URL="${{ github.event.review.html_url }}"
+            COMMENT="${{ github.event.review.body }}"
+            case "${{ github.event.review.state }}" in
+              approved)
+                HEADER_TITLE="✅ @${{ github.actor }} approved"
+                BUTTON_TEXT="🔍 View Approval"
+                ;;
+              commented)
+                HEADER_TITLE="💬 @${{ github.actor }} left a comment"
+                BUTTON_TEXT="🔍 View Comment"
+                ;;
+              changes_requested)
+                HEADER_TITLE="❌ @${{ github.actor }} requested changes"
+                BUTTON_TEXT="🔍 View Requested Changes"
+                ;;
+              *)
+                HEADER_TITLE="📌 @${{ github.actor }} reviewed"
+                BUTTON_TEXT="🔍 View Event"
+                ;;
+            esac
+          fi
                     
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
           echo "HEADER_TITLE=$HEADER_TITLE" >> $GITHUB_ENV
           echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
-          echo "BUTTON_URL=${{ github.event.review.html_url }}" >> $GITHUB_ENV
+          echo "BUTTON_URL=$BUTTON_URL" >> $GITHUB_ENV
+          echo "COMMENT=$COMMENT" >> $GITHUB_ENV
 
       - name: Send Notification to Google Chat
         id: send_notification
         run: |
-          ESCAPED_BODY=$(echo "${{ github.event.review.body }}" | jq -Rs '.')
+          ESCAPED_COMMENT=$(echo "$COMMENT" | jq -Rs '.')
           JSON_PAYLOAD='{
             "cardsV2": [{
               "cardId": "pr-notification",
@@ -174,7 +184,7 @@ jobs:
           if [ -n "${{ github.event.review.body }}" ]; then
             JSON_PAYLOAD+=',{
               "textParagraph": {
-                  "text": '"$ESCAPED_BODY"',
+                  "text": '"$ESCAPED_COMMENT"',
                   "maxLines": 5
                 }
               }'
