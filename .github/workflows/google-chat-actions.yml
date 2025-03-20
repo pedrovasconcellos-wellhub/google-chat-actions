@@ -92,7 +92,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>oi \"Revert\": hahaha"
+                          "text": "<b>oi \"Revert\"</b>: hahaha"
                         }
                       }]
                     },
