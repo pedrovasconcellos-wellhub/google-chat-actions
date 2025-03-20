@@ -127,9 +127,11 @@ jobs:
             BUTTON_TEXT="🔍 View Comment"
             BUTTON_URL="${{ github.event.comment.html_url }}"
             COMMENT="${{ github.event.comment.body }}"
+            PR_NUMBER=$(echo "${{ github.event.comment.html_url }}" | sed 's/.*pull\/\([0-9]*\).*/\1/')
           else
             BUTTON_URL="${{ github.event.review.html_url }}"
             COMMENT="${{ github.event.review.body }}"
+            PR_NUMBER="${{ github.event.pull_request.number }}"
             case "${{ github.event.review.state }}" in
               approved)
                 HEADER_TITLE="✅ @${{ github.actor }} approved"
@@ -155,6 +157,7 @@ jobs:
           echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
           echo "BUTTON_URL=$BUTTON_URL" >> $GITHUB_ENV
           echo "COMMENT=$COMMENT" >> $GITHUB_ENV
+          echo "THREAD_KEY=${{ github.repository }}/$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Send Notification to Google Chat
         id: send_notification
@@ -181,7 +184,7 @@ jobs:
                     }
                   }'
 
-          if [ -n "${{ github.event.review.body }}" ]; then
+          if [ -n "${{COMMENT}}" ]; then
             JSON_PAYLOAD+=',{
               "textParagraph": {
                   "text": '"$ESCAPED_COMMENT"',
@@ -192,7 +195,7 @@ jobs:
             
           JSON_PAYLOAD+=']'
 
-          if [ -n "${{ github.event.review.body }}" ]; then
+          if [ -n "$COMMENT" ]; then
             JSON_PAYLOAD+=',
               "collapsible": true,
               "collapseControl": {
@@ -221,7 +224,7 @@ jobs:
 
           JSON_PAYLOAD+='}]}}],
             "thread": {
-              "threadKey": "'"${{ github.repository }}/${{ github.event.pull_request.number }}"'"
+              "threadKey": "'"$THREAD_KEY"'"
             }
           }'
 
