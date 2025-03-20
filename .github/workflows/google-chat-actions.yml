@@ -111,7 +111,7 @@ jobs:
 
   notify-pr-review:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review' || github.event_name = "issue_comment"
+    if: github.event_name == 'pull_request_review' || github.event_name == "issue_comment"
     steps:
       - name: Prepare message
         id: prepare_message
