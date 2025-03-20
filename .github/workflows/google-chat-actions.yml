@@ -131,7 +131,7 @@ jobs:
           fi
           
           if [ "${{ github.event_name }}" == "issue_comment" ]; then
-            SUBTITLE="💬 @${{ github.actor }} left a comment"
+            HEADER_SUBTITLE="💬 @${{ github.actor }} left a comment"
             BUTTON_TEXT="🔍 View Comment"
             BUTTON_URL="${{ github.event.comment.html_url }}"
             COMMENT="${{ github.event.comment.body }}"
