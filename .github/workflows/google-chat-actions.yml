@@ -197,7 +197,7 @@ jobs:
           if [ -n "$COMMENT" ]; then
             JSON_PAYLOAD+=',{
               "textParagraph": {
-                  "text": '"$ESCAPED_COMMENT"',
+                  "text": "$ESCAPED_COMMENT",
                   "maxLines": 5
                 }
               }'
