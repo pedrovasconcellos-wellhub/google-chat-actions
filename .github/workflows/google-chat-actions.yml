@@ -195,7 +195,7 @@ jobs:
             
           JSON_PAYLOAD+=']'
 
-          if [ -n "$COMMENT" ]; then
+          if [ -n "${{COMMENT}}" ]; then
             JSON_PAYLOAD+=',
               "collapsible": true,
               "collapseControl": {
