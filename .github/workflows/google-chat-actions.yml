@@ -32,7 +32,7 @@ jobs:
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
 
-          PR_TITLE=$(jq -n --arg text '${{ github.event.pull_request.title }}' -r '$text')
+          PR_TITLE=$(echo '${{ github.event.pull_request.title }}' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | jq -n --arg text "$(cat)" -r '$text')
           
           case "${{ github.event.action }}" in
             opened)
