@@ -32,6 +32,8 @@ jobs:
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
 
+          PR_TITLE=$(echo "${{ github.event.pull_request.title }}" | jq -Rs '.')
+
           case "${{ github.event.action }}" in
             opened)
               if [ "${{ github.event.pull_request.draft }}" == "true" ]; then
@@ -42,7 +44,7 @@ jobs:
                 HEADER_TITLE="📌 Pull Request Created"
                 HEADER_SUBTITLE=""
                 MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-                MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+                MESSAGE+="📄 <b>Title:</b> $PR_TITLE<br/>"
                 MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               fi
               ;;
@@ -55,7 +57,7 @@ jobs:
               HEADER_TITLE="🚀 Pull Request Ready for Review"
               HEADER_SUBTITLE=""
               MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-              MESSAGE+="📄 <b>Title:</b> ${{ github.event.pull_request.title }}<br/>"
+              MESSAGE+="📄 <b>Title:</b> $PR_TITLE<br/>"
               MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               ;;
             converted_to_draft)
@@ -78,14 +80,13 @@ jobs:
       - name: Send PR Notification to Google Chat
         id: send_notification
         run: |
-          ESCAPED_TITLE=$(echo "$HEADER_TITLE" | jq -Rs '. | @json')
           curl -X POST -H "Content-Type: application/json" \
           -d '{
                 "cardsV2": [{
                   "cardId": "pr-notification",
                   "card": {
                     "header": {
-                      "title": "'"$ESCAPED_TITLE"'",
+                      "title": '"$ESCAPED_TITLE"',
                       "subtitle": "'"$HEADER_SUBTITLE"'",
                       "imageUrl": "'"$HEADER_IMAGE"'"
                     },
