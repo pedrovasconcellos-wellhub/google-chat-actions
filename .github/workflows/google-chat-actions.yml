@@ -136,11 +136,11 @@ jobs:
             HEADER_SUBTITLE="💬 @${{ github.actor }} left a comment"
             BUTTON_TEXT="🔍 View Comment"
             BUTTON_URL="${{ github.event.comment.html_url }}"
-            COMMENT=$(echo '${{ github.event.comment.body }}' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | jq -n --arg text "$(cat)" -r '$text')
+            COMMENT="$(echo '${{ github.event.comment.body }}' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | jq -n --arg text "$(cat)" -r '$text')"
             PR_NUMBER=$(echo "${{ github.event.comment.html_url }}" | sed 's/.*pull\/\([0-9]*\).*/\1/')
           else
             BUTTON_URL="${{ github.event.review.html_url }}"
-            COMMENT=$(echo '${{ github.event.review.body }}' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | jq -n --arg text "$(cat)" -r '$text')
+            COMMENT="$(echo '${{ github.event.review.body }}' | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | jq -n --arg text "$(cat)" -r '$text')"
             PR_NUMBER="${{ github.event.pull_request.number }}"
             case "${{ github.event.review.state }}" in
               approved)
