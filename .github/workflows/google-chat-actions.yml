@@ -78,6 +78,7 @@ jobs:
       - name: Send PR Notification to Google Chat
         id: send_notification
         run: |
+          ESCAPED_MESSAGE=$(echo "$MESSAGE" | jq -Rs '. | @json')
           curl -X POST -H "Content-Type: application/json" \
           -d '{
                 "cardsV2": [{
@@ -91,7 +92,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "'"$MESSAGE"'"
+                          "text": '"$ESCAPED_MESSAGE"'
                         }
                       }]
                     },
