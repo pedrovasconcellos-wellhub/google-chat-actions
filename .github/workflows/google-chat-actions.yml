@@ -39,6 +39,8 @@ jobs:
           echo ${{ github.event.pull_request.title }}
           echo "GH TITLE 2:"
           echo "${{ github.event.pull_request.title }}"
+          NEW_PR_TITLE=$(jq -n --arg text "${{ github.event.pull_request.title }}" '$text')
+          echo $NEW_PR_TITLE
 
           
           case "${{ github.event.action }}" in
@@ -51,7 +53,7 @@ jobs:
                 HEADER_TITLE="📌 Pull Request Created"
                 HEADER_SUBTITLE=""
                 MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-                MESSAGE+="📄 <b>Title:</b> $PR_TITLE<br/>"
+                MESSAGE+="📄 <b>Title:</b> $NEW_PR_TITLE<br/>"
                 MESSAGE+="👤 <b>Author:</b> @${{ github.actor }}"
               fi
               ;;
