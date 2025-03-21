@@ -5,7 +5,6 @@ on:
     inputs:
       header_image:
         description: "Custom header image URL (optional)"
-        default: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
         required: false
         type: string
       reply_option:
@@ -24,7 +23,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Prepare message
-        id: prepare_message
+        id: prepare_pr_message
         run: |
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
@@ -38,6 +37,7 @@ jobs:
             opened)
               if [ "${{ github.event.pull_request.draft }}" == "true" ]; then
                 echo "Notification skipped because the trigger is a draft PR creation"
+                echo "skip_job=true" >> $GITHUB_ENV
                 exit 0
               else
                 HEADER_IMAGE="${{ inputs.header_image }}"
@@ -78,7 +78,8 @@ jobs:
           echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
 
       - name: Send PR Notification to Google Chat
-        id: send_notification
+        id: send_pr_notification
+        if: env.skip_job != 'true'
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
@@ -124,7 +125,7 @@ jobs:
     if: github.event_name == 'pull_request_review' || github.event_name == 'issue_comment'
     steps:
       - name: Prepare message
-        id: prepare_message
+        id: prepare_pr_review_message
         run: |
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
@@ -170,7 +171,7 @@ jobs:
           echo "THREAD_KEY=${{ github.repository }}/$PR_NUMBER" >> $GITHUB_ENV
 
       - name: Send Notification to Google Chat
-        id: send_notification
+        id: send_pr_review_notification
         run: |
           JSON_PAYLOAD='{
             "cardsV2": [{
@@ -277,12 +278,13 @@ jobs:
           done
           
           # Remove last extra <br/> tag
-          PR_MESSAGE=$(echo "$PR_MESSAGE" | sed 's/<br\/>$//')
+          PR_MESSAGE=$(echo "$PR_MESSAGE" | sed 's/<br\/>*$//')
           
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
           echo "PR_COUNT=$PR_COUNT" >> $GITHUB_ENV
 
       - name: Send Open PRs Report to Google Chat
+        id: send_open_prs_notification
         if: env.skip_job != 'true'
         run: |
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
