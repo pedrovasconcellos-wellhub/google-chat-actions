@@ -294,13 +294,13 @@ jobs:
           else
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
-          echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
+          
           echo "reply option: $REPLY_OPTION"
           
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
           echo "msg: $ESCAPED_MESSAGE"
           
-          echo "THREAD_KEY=$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
+          THREAD_KEY=$(date -u +'%Y-%m-%d')
           echo "thread key: $THREAD_KEY"
           
           curl -X POST -H "Content-Type: application/json" \
