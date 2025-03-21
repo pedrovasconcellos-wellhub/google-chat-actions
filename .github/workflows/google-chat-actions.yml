@@ -247,13 +247,9 @@ jobs:
       - name: Fetch Open PRs via GitHub API
         id: fetch_open_prs
         run: |
-          echo "pre response"
           RESPONSE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                           -H "Accept: application/vnd.github.v3+json" \
                           "https://api.github.com/repos/${{ github.repository }}/pulls?state=open")
-
-          echo "post response"
-          echo "$RESPONSE"
 
           # Verifica se a resposta é um JSON válido
           if ! echo "$RESPONSE" | jq empty; then
@@ -261,18 +257,14 @@ jobs:
             echo "API Response: $RESPONSE"
             exit 1
           fi
-          
-          echo "PR list is not empty"
-    
+              
           PR_COUNT=$(echo "$RESPONSE" | jq '. | length')
           
           if [ "$PR_COUNT" -eq 0 ]; then
             echo "No open PRs, skipping notification."
             exit 0
           fi
-          
-          echo "creating message...."
-          
+                    
           PR_MESSAGE=""
           for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
@@ -280,28 +272,22 @@ jobs:
             PR_URL=$(_jq '.html_url')
             PR_MESSAGE+="🔹 <b>$PR_TITLE</b><br/><a href='$PR_URL'>$PR_URL</a><br/><br/>"
           done
-          
-          echo "message build!"
-          
+                    
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
 
       - name: Send Open PRs Report to Google Chat
-        run: |
-          echo "Starting job..."
-          
+        run: |          
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
           else
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
-          
-          echo "reply option: $REPLY_OPTION"
+          echo "REPLY_OPTION: $REPLY_OPTION"
           
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
-          echo "msg: $ESCAPED_MESSAGE"
           
-          THREAD_KEY=$(date -u +'%Y-%m-%d')
-          echo "thread key: $THREAD_KEY"
+          THREAD_KEY="report-opened-prs-$(date -u +'%Y-%m-%d')"
+          echo "THREAD_KEY: $THREAD_KEY"
           
           curl -X POST -H "Content-Type: application/json" \
           -d '{
@@ -339,7 +325,7 @@ jobs:
                       "uncollapsibleWidgetsCount": 0,
                       "widgets": [{
                         "textParagraph": {
-                          "text": "dfff"
+                          "text": '"$ESCAPED_MESSAGE"'
                         }
                       }]
                     }]
