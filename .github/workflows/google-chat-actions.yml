@@ -250,33 +250,33 @@ jobs:
           RESPONSE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                           -H "Accept: application/vnd.github.v3+json" \
                           "https://api.github.com/repos/${{ github.repository }}/pulls?state=open")
-
+  
           # Verifica se a resposta é um JSON válido
           if ! echo "$RESPONSE" | jq empty; then
             echo "❌ Erro: Resposta inválida da API do GitHub"
             echo "API Response: $RESPONSE"
             exit 1
           fi
-              
+          
           PR_COUNT=$(echo "$RESPONSE" | jq '. | length')
           
           if [ "$PR_COUNT" -eq 0 ]; then
             echo "No open PRs, skipping notification."
             exit 0
           fi
-                    
+  
           PR_MESSAGE=""
           for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escapar aspas duplas
+            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')
             PR_URL=$(_jq '.html_url')
             PR_MESSAGE+="🔹 <b>$PR_TITLE</b><br/><a href='$PR_URL'>$PR_URL</a><br/><br/>"
           done
-                    
+          
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
 
       - name: Send Open PRs Report to Google Chat
-        run: |          
+        run: |
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
           else
@@ -296,7 +296,7 @@ jobs:
                   "card": {
                     "header": {
                       "title": "📢 Open Pull Requests Report",
-                      "subtitle": "Weekly Summary",
+                      "subtitle": "${{ github.repository }}",
                       "imageUrl": "'"${{ inputs.header_image }}"'"
                     },
                     "sections": [{
@@ -336,3 +336,4 @@ jobs:
                 }
               }' \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
+
