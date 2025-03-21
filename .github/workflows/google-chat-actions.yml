@@ -251,13 +251,6 @@ jobs:
                           -H "Accept: application/vnd.github.v3+json" \
                           "https://api.github.com/repos/${{ github.repository }}/pulls?state=open")
 
-          # Verifica se a resposta é um JSON válido
-          if ! echo "$RESPONSE" | jq empty; then
-            echo "❌ Erro: Resposta inválida da API do GitHub"
-            echo "API Response: $RESPONSE"
-            exit 1
-          fi
-
           PR_COUNT=$(echo "$RESPONSE" | jq '. | length')
 
           if [ "$PR_COUNT" -eq 0 ]; then
@@ -269,17 +262,17 @@ jobs:
           for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
 
-            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escapar aspas duplas
+            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escape double quotes
             PR_URL=$(_jq '.html_url')
             PR_AUTHOR=$(_jq '.user.login')
-            PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Data sem horário
+            PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Date without time
 
-            # Calcula a quantidade de dias desde a criação do PR
+            # Calculate the number of days since the PR was created
             PR_CREATED_DATE_FORMATTED=$(date -d "$PR_CREATED_DATE" +'%Y-%m-%d')
             DAYS_OPEN=$(($(date +%s) - $(date -d "$PR_CREATED_DATE" +%s)))
-            DAYS_OPEN=$((DAYS_OPEN / 86400))  # Convertendo para dias
+            DAYS_OPEN=$((DAYS_OPEN / 86400))  # Convert to days
 
-            # Criando a mensagem
+            # Construct the message
             PR_MESSAGE+="🔹 <b><a href='$PR_URL'>$PR_TITLE</a></b><br/>"
             PR_MESSAGE+="👤 <b>Author:</b> @$PR_AUTHOR<br/>"
             PR_MESSAGE+="📅 <b>Opened:</b> $PR_CREATED_DATE_FORMATTED ($DAYS_OPEN days)<br/><br/>"
@@ -321,7 +314,7 @@ jobs:
                               "name": "visibility_off"
                             }
                           },
-                          "text": "Esconder lista",
+                          "text": "Hide list",
                           "type": "BORDERLESS"
                         },
                         "expandButton": {
@@ -330,14 +323,14 @@ jobs:
                               "name": "visibility"
                             }
                           },
-                          "text": "Mostrar lista",
+                          "text": "Show list",
                           "type": "BORDERLESS"
                         }
                       },
                       "uncollapsibleWidgetsCount": 0,
                       "widgets": [{
                         "textParagraph": {
-                          "text": '"$ESCAPED_MESSAGE"'
+                          "text": "<b>Total Open PRs:</b> '$PR_COUNT'<br/><br/>$ESCAPED_MESSAGE"
                         }
                       }]
                     }]
@@ -348,3 +341,4 @@ jobs:
                 }
               }' \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
+  
