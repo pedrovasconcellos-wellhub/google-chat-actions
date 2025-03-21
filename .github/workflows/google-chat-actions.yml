@@ -240,7 +240,7 @@ jobs:
           echo "$JSON_PAYLOAD" | curl -X POST -H "Content-Type: application/json" -d @- \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
-  notify-opened-prs:
+  notify-open-prs:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
@@ -265,8 +265,11 @@ jobs:
             PR_URL=$(_jq '.html_url')
             PR_AUTHOR=$(_jq '.user.login')
             PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Get date only
-            PR_DURATION=$(( ($(date -d "$PR_CREATED_DATE" +%s) - $(date +%s)) / 86400 ))  # Calculate days open
-          
+            PR_CREATED_TIMESTAMP=$(date -d "$PR_CREATED_DATE" +%s)  # Get timestamp for created date
+            CURRENT_TIMESTAMP=$(date +%s)  # Get current timestamp
+  
+            # Calculate the number of days PR has been open
+            PR_DURATION=$(( (CURRENT_TIMESTAMP - PR_CREATED_TIMESTAMP) / 86400 ))
             PR_MESSAGE+="🔹 <b><a href='$PR_URL'>$PR_TITLE</a></b><br/>"
             PR_MESSAGE+="👤 <b>Author:</b> @$PR_AUTHOR<br/>"
             PR_MESSAGE+="📅 <b>Opened:</b> $PR_CREATED_DATE ($PR_DURATION days)<br/><br/>"
@@ -289,7 +292,7 @@ jobs:
 
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
 
-          THREAD_KEY="report-opened-prs-$(date -u +'%Y-%m-%d')"
+          THREAD_KEY="report-open-prs-$(date -u +'%Y-%m-%d')"
           echo "THREAD_KEY: $THREAD_KEY"
 
           curl -X POST -H "Content-Type: application/json" \
