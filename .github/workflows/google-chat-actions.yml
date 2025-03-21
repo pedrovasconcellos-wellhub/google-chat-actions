@@ -308,7 +308,7 @@ jobs:
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>Total Open PRs:</b> '$PR_COUNT'<br/><br/>"
+                          "text": "📊 <b>Open PRs:</b> '$PR_COUNT'"
                         }
                       }]
                     }, {
