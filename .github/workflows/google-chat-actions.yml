@@ -259,7 +259,7 @@ jobs:
           fi
 
           PR_MESSAGE=""
-            for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
+          for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
             PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escape double quotes
             PR_URL=$(_jq '.html_url')
