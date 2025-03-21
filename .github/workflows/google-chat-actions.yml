@@ -255,7 +255,7 @@ jobs:
 
           if [ "$PR_COUNT" -eq 0 ]; then
             echo "No open PRs, skipping notification."
-            echo "skip_job=true" >> $GITHUB_ENV  # Set an environment variable to indicate the job should be skipped
+            echo "skip_job=true" >> $GITHUB_ENV
             exit 0
           fi
 
@@ -266,8 +266,8 @@ jobs:
             PR_URL=$(_jq '.html_url')
             PR_AUTHOR=$(_jq '.user.login')
             PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Get date only
-            PR_CREATED_TIMESTAMP=$(date -d "$PR_CREATED_DATE" +%s)  # Get timestamp for created date
-            CURRENT_TIMESTAMP=$(date +%s)  # Get current timestamp
+            PR_CREATED_TIMESTAMP=$(date -d "$PR_CREATED_DATE" +%s)
+            CURRENT_TIMESTAMP=$(date +%s)
   
             # Calculate the number of days PR has been open
             PR_DURATION=$(( (CURRENT_TIMESTAMP - PR_CREATED_TIMESTAMP) / 86400 ))
@@ -282,13 +282,8 @@ jobs:
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
           echo "PR_COUNT=$PR_COUNT" >> $GITHUB_ENV
 
-      - name: Skip sending PRs report if no open PRs
-        if: env.skip_job == 'true'
-        run: |
-          echo "No open PRs, skipping the notification job."
-          exit 0
-
       - name: Send Open PRs Report to Google Chat
+        if: env.skip_job != 'true'
         run: |
           if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
             REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
