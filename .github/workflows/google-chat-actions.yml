@@ -280,6 +280,12 @@ jobs:
 
       - name: Send Open PRs Report to Google Chat
         run: |
+          if [ "${{ inputs.reply_option }}" == "new_thread" ]; then
+            REPLY_OPTION="MESSAGE_REPLY_OPTION_UNSPECIFIED"
+          else
+            REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
+          fi
+          
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
           echo "THREAD_KEY=opened-prs-report-$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
           
