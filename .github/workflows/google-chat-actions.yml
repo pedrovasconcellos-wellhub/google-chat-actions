@@ -19,7 +19,7 @@ on:
 
 jobs:
   notify-pr:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'pull_request'
     steps:
       - name: Prepare message
@@ -121,7 +121,7 @@ jobs:
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
   notify-pr-review:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'pull_request_review' || github.event_name == 'issue_comment'
     steps:
       - name: Prepare message
@@ -242,7 +242,7 @@ jobs:
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
   notify-open-prs:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Fetch Open PRs via GitHub API
@@ -294,11 +294,14 @@ jobs:
           fi
           echo "REPLY_OPTION: $REPLY_OPTION"
 
-          ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
+          ESCAPED_PR_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
 
           THREAD_KEY="report-open-prs-$(date -u +'%Y-%m-%d')"
           echo "THREAD_KEY: $THREAD_KEY"
 
+          MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
+          MESSAGE+="🔢 <b>Count:</b> '$PR_COUNT'"
+          
           curl -X POST -H "Content-Type: application/json" \
           -d '{
                 "cardsV2": [{
@@ -306,13 +309,12 @@ jobs:
                   "card": {
                     "header": {
                       "title": "📋 Open Pull Requests Report",
-                      "subtitle": "${{ github.repository }}",
                       "imageUrl": "'"${{ inputs.header_image }}"'"
                     },
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "🔢 <b>Count:</b> '$PR_COUNT'"
+                          "text": "'"$MESSAGE"'"
                         }
                       }]
                     }, {
@@ -341,7 +343,7 @@ jobs:
                       "uncollapsibleWidgetsCount": 0,
                       "widgets": [{
                         "textParagraph": {
-                          "text": '"$ESCAPED_MESSAGE"'
+                          "text": '"$ESCAPED_PR_MESSAGE"'
                         }
                       }]
                     }]
@@ -352,3 +354,5 @@ jobs:
                 }
               }' \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
+  
+  
