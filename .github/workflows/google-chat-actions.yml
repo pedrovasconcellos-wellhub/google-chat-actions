@@ -303,14 +303,14 @@ jobs:
                   "cardId": "open-prs-report",
                   "card": {
                     "header": {
-                      "title": "📢 Open Pull Requests Report",
+                      "title": "📋 Open Pull Requests Report",
                       "subtitle": "${{ github.repository }}",
                       "imageUrl": "'"${{ inputs.header_image }}"'"
                     },
                     "sections": [{
                       "widgets": [{
                         "textParagraph": {
-                          "text": "📊 <b>Open PRs:</b> '$PR_COUNT'"
+                          "text": "🔢 <b>Count:</b> '$PR_COUNT'"
                         }
                       }]
                     }, {
