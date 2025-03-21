@@ -162,7 +162,7 @@ jobs:
                 ;;
             esac
           fi
-                    
+          
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
           echo "HEADER_SUBTITLE=$HEADER_SUBTITLE" >> $GITHUB_ENV
           echo "BUTTON_TEXT=$BUTTON_TEXT" >> $GITHUB_ENV
@@ -202,7 +202,7 @@ jobs:
                 }
               }'
           fi
-            
+          
           JSON_PAYLOAD+=']'
 
           if [ -n "$COMMENT" ]; then
@@ -269,7 +269,7 @@ jobs:
             PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Get date only
             PR_CREATED_TIMESTAMP=$(date -d "$PR_CREATED_DATE" +%s)
             CURRENT_TIMESTAMP=$(date +%s)
-  
+          
             # Calculate the number of days PR has been open
             PR_DURATION=$(( (CURRENT_TIMESTAMP - PR_CREATED_TIMESTAMP) / 86400 ))
             PR_MESSAGE+="🔹 <b><a href='$PR_URL'>$PR_TITLE</a></b><br/>"
@@ -352,5 +352,3 @@ jobs:
                 }
               }' \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
-  
-  
