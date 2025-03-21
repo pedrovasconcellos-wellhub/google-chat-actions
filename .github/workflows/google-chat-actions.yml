@@ -255,7 +255,8 @@ jobs:
 
           if [ "$PR_COUNT" -eq 0 ]; then
             echo "No open PRs, skipping notification."
-            exit 1
+            echo "skip_job=true" >> $GITHUB_ENV  # Set an environment variable to indicate the job should be skipped
+            exit 0
           fi
 
           PR_MESSAGE=""
@@ -280,6 +281,12 @@ jobs:
           
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
           echo "PR_COUNT=$PR_COUNT" >> $GITHUB_ENV
+
+      - name: Skip sending PRs report if no open PRs
+        if: env.skip_job == 'true'
+        run: |
+          echo "No open PRs, skipping the notification job."
+          exit 0
 
       - name: Send Open PRs Report to Google Chat
         run: |
