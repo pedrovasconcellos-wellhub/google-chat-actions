@@ -298,7 +298,10 @@ jobs:
           echo "reply option: $REPLY_OPTION"
           
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
+          echo "msg: $ESCAPED_MESSAGE"
+          
           echo "THREAD_KEY=opened-prs-report-$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "thread key: $THREAD_KEY"
           
           curl -X POST -H "Content-Type: application/json" \
           -d '{
@@ -336,7 +339,7 @@ jobs:
                       "uncollapsibleWidgetsCount": 0,
                       "widgets": [{
                         "textParagraph": {
-                          "text": '"$ESCAPED_MESSAGE"'
+                          "text": "dfff"
                         }
                       }]
                     }]
