@@ -300,7 +300,7 @@ jobs:
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
           echo "msg: $ESCAPED_MESSAGE"
           
-          echo "THREAD_KEY=opened-prs-report-$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "THREAD_KEY=$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
           echo "thread key: $THREAD_KEY"
           
           curl -X POST -H "Content-Type: application/json" \
