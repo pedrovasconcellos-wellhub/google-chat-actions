@@ -300,7 +300,7 @@ jobs:
           echo "THREAD_KEY: $THREAD_KEY"
 
           MESSAGE+="🔗 <b>Repository:</b> ${{ github.repository }}<br/>"
-          MESSAGE+="🔢 <b>Count:</b> '$PR_COUNT'"
+          MESSAGE+="🔢 <b>Count:</b> $PR_COUNT"
           
           curl -X POST -H "Content-Type: application/json" \
           -d '{
