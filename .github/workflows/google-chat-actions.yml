@@ -241,7 +241,7 @@ jobs:
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
   notify-opened-prs:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Fetch Open PRs via GitHub API
