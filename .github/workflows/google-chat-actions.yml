@@ -279,6 +279,7 @@ jobs:
           done
 
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
+          echo "PR_COUNT=$PR_COUNT" >> $GITHUB_ENV
 
       - name: Send Open PRs Report to Google Chat
         run: |
@@ -305,6 +306,12 @@ jobs:
                       "imageUrl": "'"${{ inputs.header_image }}"'"
                     },
                     "sections": [{
+                      "widgets": [{
+                        "textParagraph": {
+                          "text": "<b>Total Open PRs:</b> '$PR_COUNT'<br/><br/>"
+                        }
+                      }]
+                    }, {
                       "collapsible": true,
                       "collapseControl": {
                         "horizontalAlignment": "CENTER",
@@ -330,7 +337,7 @@ jobs:
                       "uncollapsibleWidgetsCount": 0,
                       "widgets": [{
                         "textParagraph": {
-                          "text": "<b>Total Open PRs:</b> '$PR_COUNT'<br/><br/>$ESCAPED_MESSAGE"
+                          "text": '"$ESCAPED_MESSAGE"'
                         }
                       }]
                     }]
@@ -341,4 +348,5 @@ jobs:
                 }
               }' \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
+  
   
