@@ -269,7 +269,7 @@ jobs:
           fi
           
           PR_MESSAGE=""
-          for row in $(echo "$PR_LIST" | jq -r '.[] | @base64'); do
+          for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
             PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escapar aspas duplas
             PR_URL=$(_jq '.html_url')
@@ -287,6 +287,7 @@ jobs:
           fi
           
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
+          echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
           echo "THREAD_KEY=opened-prs-report-$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
           
           curl -X POST -H "Content-Type: application/json" \
