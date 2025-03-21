@@ -239,3 +239,84 @@ jobs:
 
           echo "$JSON_PAYLOAD" | curl -X POST -H "Content-Type: application/json" -d @- \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
+
+  notify-opened-prs:
+    runs-on: self-hosted
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Fetch Open PRs via GitHub API
+        id: fetch_open_prs
+        run: |
+          PR_LIST=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                          -H "Accept: application/vnd.github.v3+json" \
+                          "https://api.github.com/repos/${{ github.repository }}/pulls?state=open")
+          
+          PR_COUNT=$(echo "$PR_LIST" | jq '. | length')
+          
+          if [ "$PR_COUNT" -eq 0 ]; then
+            echo "No open PRs, skipping notification."
+            exit 0
+          fi
+          
+          PR_MESSAGE=""
+          for row in $(echo "$PR_LIST" | jq -r '.[] | @base64'); do
+            _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
+            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escapar aspas duplas
+            PR_URL=$(_jq '.html_url')
+            PR_MESSAGE+="🔹 <b>$PR_TITLE</b><br/><a href='$PR_URL'>$PR_URL</a><br/><br/>"
+          done
+          
+          echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
+
+      - name: Send Open PRs Report to Google Chat
+        run: |
+          ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
+          echo "THREAD_KEY=opened-prs-report-$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
+          
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+                "cardsV2": [{
+                  "cardId": "open-prs-report",
+                  "card": {
+                    "header": {
+                      "title": "📢 Open Pull Requests Report",
+                      "subtitle": "Weekly Summary",
+                      "imageUrl": "'"${{ inputs.header_image }}"'"
+                    },
+                    "sections": [{
+                      "collapsible": true,
+                      "collapseControl": {
+                        "horizontalAlignment": "CENTER",
+                        "collapseButton": {
+                          "icon": {
+                            "materialIcon": {
+                              "name": "visibility_off"
+                            }
+                          },
+                          "text": "Esconder lista",
+                          "type": "BORDERLESS"
+                        },
+                        "expandButton": {
+                          "icon": {
+                            "materialIcon": {
+                              "name": "visibility"
+                            }
+                          },
+                          "text": "Mostrar lista",
+                          "type": "BORDERLESS"
+                        }
+                      },
+                      "uncollapsibleWidgetsCount": 0,
+                      "widgets": [{
+                        "textParagraph": {
+                          "text": '"$ESCAPED_MESSAGE"'
+                        }
+                      }]
+                    }]
+                  }
+                }],
+                "thread": {
+                   "threadKey": "'"$THREAD_KEY"'"
+                }
+              }' \
+          "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
