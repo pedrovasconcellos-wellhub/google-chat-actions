@@ -295,6 +295,7 @@ jobs:
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
           echo "REPLY_OPTION=$REPLY_OPTION" >> $GITHUB_ENV
+          echo "reply option: $REPLY_OPTION"
           
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
           echo "THREAD_KEY=opened-prs-report-$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
