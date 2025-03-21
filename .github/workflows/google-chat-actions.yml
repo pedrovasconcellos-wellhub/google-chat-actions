@@ -259,25 +259,22 @@ jobs:
           fi
 
           PR_MESSAGE=""
-          for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
+            for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-
             PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escape double quotes
             PR_URL=$(_jq '.html_url')
             PR_AUTHOR=$(_jq '.user.login')
-            PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Date without time
-
-            # Calculate the number of days since the PR was created
-            PR_CREATED_DATE_FORMATTED=$(date -d "$PR_CREATED_DATE" +'%Y-%m-%d')
-            DAYS_OPEN=$(($(date +%s) - $(date -d "$PR_CREATED_DATE" +%s)))
-            DAYS_OPEN=$((DAYS_OPEN / 86400))  # Convert to days
-
-            # Construct the message
+            PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Get date only
+            PR_DURATION=$(( ($(date -d "$PR_CREATED_DATE" +%s) - $(date +%s)) / 86400 ))  # Calculate days open
+          
             PR_MESSAGE+="🔹 <b><a href='$PR_URL'>$PR_TITLE</a></b><br/>"
             PR_MESSAGE+="👤 <b>Author:</b> @$PR_AUTHOR<br/>"
-            PR_MESSAGE+="📅 <b>Opened:</b> $PR_CREATED_DATE_FORMATTED ($DAYS_OPEN days)<br/><br/>"
+            PR_MESSAGE+="📅 <b>Opened:</b> $PR_CREATED_DATE ($PR_DURATION days)<br/><br/>"
           done
-
+          
+          # Remove last extra <br/> tag
+          PR_MESSAGE=$(echo "$PR_MESSAGE" | sed 's/<br\/>$//')
+          
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
           echo "PR_COUNT=$PR_COUNT" >> $GITHUB_ENV
 
