@@ -261,6 +261,8 @@ jobs:
             echo "API Response: $RESPONSE"
             exit 1
           fi
+          
+          echo "PR list is not empty"
     
           PR_COUNT=$(echo "$RESPONSE" | jq '. | length')
           
@@ -269,6 +271,8 @@ jobs:
             exit 0
           fi
           
+          echo "creating message...."
+          
           PR_MESSAGE=""
           for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
@@ -276,6 +280,8 @@ jobs:
             PR_URL=$(_jq '.html_url')
             PR_MESSAGE+="🔹 <b>$PR_TITLE</b><br/><a href='$PR_URL'>$PR_URL</a><br/><br/>"
           done
+          
+          echo "message build!"
           
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
 
