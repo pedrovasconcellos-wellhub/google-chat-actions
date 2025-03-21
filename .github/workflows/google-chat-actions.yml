@@ -19,7 +19,7 @@ on:
 
 jobs:
   notify-pr:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
       - name: Prepare message
@@ -121,7 +121,7 @@ jobs:
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
   notify-pr-review:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_review' || github.event_name == 'issue_comment'
     steps:
       - name: Prepare message
@@ -242,7 +242,7 @@ jobs:
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
 
   notify-open-prs:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Fetch Open PRs via GitHub API
