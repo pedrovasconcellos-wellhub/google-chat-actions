@@ -250,29 +250,41 @@ jobs:
           RESPONSE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                           -H "Accept: application/vnd.github.v3+json" \
                           "https://api.github.com/repos/${{ github.repository }}/pulls?state=open")
-  
+
           # Verifica se a resposta é um JSON válido
           if ! echo "$RESPONSE" | jq empty; then
             echo "❌ Erro: Resposta inválida da API do GitHub"
             echo "API Response: $RESPONSE"
             exit 1
           fi
-          
+
           PR_COUNT=$(echo "$RESPONSE" | jq '. | length')
-          
+
           if [ "$PR_COUNT" -eq 0 ]; then
             echo "No open PRs, skipping notification."
             exit 0
           fi
-  
+
           PR_MESSAGE=""
           for row in $(echo "$RESPONSE" | jq -r '.[] | @base64'); do
             _jq() { echo ${row} | base64 --decode | jq -r ${1}; }
-            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')
+
+            PR_TITLE=$(_jq '.title' | sed 's/"/\\"/g')  # Escapar aspas duplas
             PR_URL=$(_jq '.html_url')
-            PR_MESSAGE+="🔹 <b>$PR_TITLE</b><br/><a href='$PR_URL'>$PR_URL</a><br/><br/>"
+            PR_AUTHOR=$(_jq '.user.login')
+            PR_CREATED_DATE=$(_jq '.created_at' | cut -d'T' -f1)  # Data sem horário
+
+            # Calcula a quantidade de dias desde a criação do PR
+            PR_CREATED_DATE_FORMATTED=$(date -d "$PR_CREATED_DATE" +'%Y-%m-%d')
+            DAYS_OPEN=$(($(date +%s) - $(date -d "$PR_CREATED_DATE" +%s)))
+            DAYS_OPEN=$((DAYS_OPEN / 86400))  # Convertendo para dias
+
+            # Criando a mensagem
+            PR_MESSAGE+="🔹 <b><a href='$PR_URL'>$PR_TITLE</a></b><br/>"
+            PR_MESSAGE+="👤 <b>Author:</b> @$PR_AUTHOR<br/>"
+            PR_MESSAGE+="📅 <b>Opened:</b> $PR_CREATED_DATE_FORMATTED ($DAYS_OPEN days)<br/><br/>"
           done
-          
+
           echo "PR_MESSAGE=$PR_MESSAGE" >> $GITHUB_ENV
 
       - name: Send Open PRs Report to Google Chat
@@ -283,12 +295,12 @@ jobs:
             REPLY_OPTION="REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"
           fi
           echo "REPLY_OPTION: $REPLY_OPTION"
-          
+
           ESCAPED_MESSAGE=$(echo "$PR_MESSAGE" | jq -Rs '.')
-          
+
           THREAD_KEY="report-opened-prs-$(date -u +'%Y-%m-%d')"
           echo "THREAD_KEY: $THREAD_KEY"
-          
+
           curl -X POST -H "Content-Type: application/json" \
           -d '{
                 "cardsV2": [{
@@ -336,4 +348,3 @@ jobs:
                 }
               }' \
           "${{ secrets.notify_pr_webhook }}&messageReplyOption=$REPLY_OPTION"
-
